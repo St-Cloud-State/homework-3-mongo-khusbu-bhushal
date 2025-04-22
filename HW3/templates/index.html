@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Application Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f7f9fb;
+            color: #333;
+        }
+        h1, h2 {
+            color: #1e3a8a;
+        }
+        .section {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        #applicationDetails, #statusDisplay {
+            background: #f4f4f4;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Loan Application Portal</h1>
+
+    <div class="section">
+        <h2>Submit New Application</h2>
+        <div class="form-group">
+            <input type="text" id="applicantName" placeholder="Applicant Name">
+        </div>
+        <div class="form-group">
+            <input type="text" id="zipcode" placeholder="Zip Code">
+        </div>
+        <button onclick="submitApplication()">Submit Application</button>
+    </div>
+
+    <div class="section">
+        <h2>Manage Application</h2>
+        <div class="form-group">
+            <input type="text" id="applicationId" placeholder="Application ID">
+        </div>
+        <button onclick="checkStatus()">Check Status</button>
+        <div id="statusDisplay"></div>
+
+        <div class="form-group">
+            <input type="text" id="newStatus" placeholder="New Status (processing, accepted, etc.)">
+            <button onclick="updateStatus()">Update Status</button>
+        </div>
+
+        <div class="form-group">
+            <input type="text" id="note" placeholder="Add Note">
+            <button onclick="addNote()">Add Note</button>
+        </div>
+
+        <button onclick="getApplicationDetails()">View Application Details</button>
+        <div id="applicationDetails"></div>
+    </div>
+
+    <script>
+        function submitApplication() {
+            const name = document.getElementById("applicantName").value;
+            const zipcode = document.getElementById("zipcode").value;
+
+            fetch('/api/add_application', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name, zipcode })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message + "\nApplication ID: " + data.application_id);
+                // Auto-fill the Application ID field
+                document.getElementById("applicationId").value = data.application_id;
+            });
+        }
+
+        function checkStatus() {
+            const applicationId = document.getElementById("applicationId").value;
+
+            fetch(`/api/status/${applicationId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status) {
+                        document.getElementById("statusDisplay").innerText = "Status: " + data.status;
+                    } else {
+                        alert(data.message);
+                    }
+                });
+        }
+
+        function updateStatus() {
+            const applicationId = document.getElementById("applicationId").value;
+            const new_status = document.getElementById("newStatus").value;
+
+            fetch('/api/change_status', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ application_id: applicationId, new_status })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+            });
+        }
+
+        function addNote() {
+            const applicationId = document.getElementById("applicationId").value;
+            const note = document.getElementById("note").value;
+
+            fetch('/api/add_note', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ application_id: applicationId, note })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+            });
+        }
+
+        function getApplicationDetails() {
+            const applicationId = document.getElementById("applicationId").value;
+
+            fetch(`/api/details/${applicationId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.message) {
+                        alert(data.message);
+                    } else {
+                        document.getElementById("applicationDetails").innerText = JSON.stringify(data, null, 2);
+                    }
+                });
+        }
+    </script>
+
+</body>
+</html>
